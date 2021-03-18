@@ -1,0 +1,18 @@
+apiVersion: metacontroller.k8s.io/v1alpha1
+kind: CompositeController
+metadata:
+  name: restore-controller
+spec:
+  generateSelector: true
+  parentResource:
+    apiVersion: hostkraken.com/v1
+    resource: restorejobs
+  childResources:
+  - apiVersion: v1
+    resource: pods
+    updateStrategy:
+      method: Recreate
+  hooks:
+    sync:
+      webhook:
+        url: http://restore-controller.wordpress/sync

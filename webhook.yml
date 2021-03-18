@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: restore-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: restore-controller
+  template:
+    metadata:
+      labels:
+        app: restore-controller
+    spec:
+      containers:
+      - name: controller
+        image: python:2.7
+        command: ["python", "/hooks/sync.py"]
+        volumeMounts:
+        - name: hooks
+          mountPath: /hooks
+      volumes:
+      - name: hooks
+        configMap:
+          name: restore-controller
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: restore-controller
+spec:
+  selector:
+    app: restore-controller
+  ports:
+  - port: 80

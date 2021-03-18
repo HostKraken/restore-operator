@@ -1,0 +1,7 @@
+apiVersion: hostkraken.com/v1
+kind: RestoreJob
+metadata:
+  name: restore-mosublo-com-03182021
+spec:
+  domain: mosublo.com
+  restorepoint: 2021-03-17
