@@ -5,7 +5,7 @@ class Controller(BaseHTTPRequestHandler):
   def sync(self, parent, children):
     # Compute status based on observed state.
     desired_status = {
-      "jobs": len(children["Pod.v1"])
+      "jobs": len(children["Job.v1"])
     }
 
     # Generate the desired child object(s).
@@ -15,12 +15,14 @@ class Controller(BaseHTTPRequestHandler):
     desired_pods = [
       {
 
-        "apiVersion": "v1",
-        "kind": "Pod",
+        "apiVersion": "batch/v1",
+        "kind": "Job",
         "metadata": {
           "name": parent["metadata"]["name"]
         },
         "spec": {
+        "template": {
+         "spec": {
           "containers": [
             {
               "args": [
@@ -81,7 +83,7 @@ class Controller(BaseHTTPRequestHandler):
                 },
                 {
                   "name": "SITE_NAME",
-                  "value": "%s" % domain
+                  "value": "%s" % domain_dashed
                 },
                 {
                   "name": "RESTOREPOINT",
@@ -177,8 +179,9 @@ class Controller(BaseHTTPRequestHandler):
               }
             }
           ]
+          }
         }
-
+}
       }
     ]
 

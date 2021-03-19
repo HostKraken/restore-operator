@@ -9,4 +9,6 @@ spec:
     kind: RestoreJob
     plural: restorejobs
     singular: restorejob
+  subresources:
+    status: {}
   scope: Namespaced

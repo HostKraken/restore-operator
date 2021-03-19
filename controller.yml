@@ -8,8 +8,8 @@ spec:
     apiVersion: hostkraken.com/v1
     resource: restorejobs
   childResources:
-  - apiVersion: v1
-    resource: pods
+  - apiVersion: batch/v1
+    resource: jobs
     updateStrategy:
       method: Recreate
   hooks:
