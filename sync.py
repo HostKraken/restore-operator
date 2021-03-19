@@ -5,7 +5,7 @@ class Controller(BaseHTTPRequestHandler):
   def sync(self, parent, children):
     # Compute status based on observed state.
     desired_status = {
-      "jobs": len(children["Job.v1"])
+      "jobs": 1
     }
 
     # Generate the desired child object(s).
