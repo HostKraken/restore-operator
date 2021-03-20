@@ -83,7 +83,7 @@ class Controller(BaseHTTPRequestHandler):
                 },
                 {
                   "name": "SITE_NAME",
-                  "value": "%s" % domain_dashed
+                  "value": "%s" % domain
                 },
                 {
                   "name": "RESTOREPOINT",
