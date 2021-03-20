@@ -88,6 +88,13 @@ class Controller(BaseHTTPRequestHandler):
                 {
                   "name": "RESTOREPOINT",
                   "value": "%s" % restorepoint
+                },
+                {
+                  "name": "JOB_TO_DELETE",
+                  "value": parent["metadata"]["name"]
+                },
+                { "name": "KUBE_TOKEN",
+                  "value": "vault:secret/data/kube-token#bearer"
                 }
               ],
               "image": "registry.digitalocean.com/business-business/restoresite:latest",
@@ -184,14 +191,12 @@ class Controller(BaseHTTPRequestHandler):
 }
       }
     ]
-
     return {"status": desired_status, "children": desired_pods}
 
   def do_POST(self):
     # Serve the sync() function as a JSON webhook.
     observed = json.loads(self.rfile.read(int(self.headers.getheader("content-length"))))
     desired = self.sync(observed["parent"], observed["children"])
-
     self.send_response(200)
     self.send_header("Content-type", "application/json")
     self.end_headers()
