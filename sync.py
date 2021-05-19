@@ -31,7 +31,7 @@ class Controller(BaseHTTPRequestHandler):
               "env": [
                 {
                   "name": "VAULT_ADDR",
-                  "value": "https://vaultino.vault-infra.svc.cluster.local:8200"
+                  "value": "https://vault.default:8200"
                 },
                 {
                   "name": "VAULT_SKIP_VERIFY",
@@ -97,7 +97,7 @@ class Controller(BaseHTTPRequestHandler):
                   "value": "vault:secret/data/kube-token#bearer"
                 }
               ],
-              "image": "registry.digitalocean.com/business-business/restoresite:latest",
+              "image": "registry.hostkraken.com/restoresite:latest",
               "imagePullPolicy": "Always",
               "name": "%s-restorebackup" % domain_dashed,
               "resources": {},
