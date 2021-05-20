@@ -140,32 +140,11 @@ data:
                   "name": "registry-business-business"
                 }
               ],
-              "initContainers": [
-                {
-                  "command": [
-                    "sh",
-                    "-c",
-                    "cp /usr/local/bin/vault-env /vault/"
-                  ],
-                  "image": "banzaicloud/vault-env:latest",
-                  "imagePullPolicy": "IfNotPresent",
-                  "name": "copy-vault-env",
-                  "resources": {},
-                  "terminationMessagePath": "/dev/termination-log",
-                  "terminationMessagePolicy": "File",
-                  "volumeMounts": [
-                    {
-                      "mountPath": "/vault/",
-                      "name": "vault-env"
-                    }
-                  ]
-                }
-              ],
               "restartPolicy": "Never",
               "schedulerName": "default-scheduler",
               "securityContext": {},
-              "serviceAccount": "%s" % domain_dashed,
-              "serviceAccountName": "%s" % domain_dashed,
+              "serviceAccount": "default",
+              "serviceAccountName": "default",
               "terminationGracePeriodSeconds": 30,
               "volumes": [
                 {
@@ -181,19 +160,6 @@ data:
                     "claimName": "wp-uploads-%s" % domain_dashed
                   }
                 },
-                {
-                  "emptyDir": {
-                    "medium": "Memory"
-                  },
-                  "name": "vault-env"
-                },
-                {
-                  "name": "vault-tls",
-                  "secret": {
-                    "defaultMode": 420,
-                    "secretName": "vault-tls"
-                  }
-                }
               ]
               }
             }
@@ -213,20 +179,3 @@ data:
 
     HTTPServer(("", 80), Controller).serve_forever()
 kind: ConfigMap
-metadata:
-  creationTimestamp: "2021-03-20T23:27:48Z"
-  managedFields:
-  - apiVersion: v1
-    fieldsType: FieldsV1
-    fieldsV1:
-      f:data:
-        .: {}
-        f:sync.py: {}
-    manager: kubectl
-    operation: Update
-    time: "2021-03-20T23:27:48Z"
-  name: restore-controller
-  namespace: wordpress
-  resourceVersion: "107334081"
-  selfLink: /api/v1/namespaces/wordpress/configmaps/restore-controller
-  uid: 2e20141b-18d1-4759-9003-11a961180c8f

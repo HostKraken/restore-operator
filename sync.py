@@ -1,205 +1,190 @@
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-import json
+    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+    import json
 
-class Controller(BaseHTTPRequestHandler):
-  def sync(self, parent, children):
-    # Compute status based on observed state.
-    desired_status = {
-      "jobs": 1
-    }
+    class Controller(BaseHTTPRequestHandler):
+      def sync(self, parent, children):
+        # Compute status based on observed state.
+        desired_status = {
+          "jobs": 1
+        }
 
-    # Generate the desired child object(s).
-    domain = parent.get("spec", {}).get("domain", "invalid.com")
-    domain_dashed = domain.replace(".","-")
-    restorepoint = parent.get("spec", {}).get("restorepoint", "0000-00-00")
-    desired_pods = [
-      {
+        # Generate the desired child object(s).
+        domain = parent.get("spec", {}).get("domain", "invalid.com")
+        domain_dashed = domain.replace(".","-")
+        restorepoint = parent.get("spec", {}).get("restorepoint", "0000-00-00")
+        desired_pods = [
+          {
 
-        "apiVersion": "batch/v1",
-        "kind": "Job",
-        "metadata": {
-          "name": parent["metadata"]["name"]
-        },
-        "spec": {
-        "template": {
-         "spec": {
-          "containers": [
-            {
-              "args": [
-                "/bin/restore-site %s" % domain
-              ],
-              "env": [
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+              "name": parent["metadata"]["name"]
+            },
+            "spec": {
+            "template": {
+             "spec": {
+              "containers": [
                 {
-                  "name": "VAULT_ADDR",
-                  "value": "https://vault.default:8200"
-                },
-                {
-                  "name": "VAULT_SKIP_VERIFY",
-                  "value": "false"
-                },
-                {
-                  "name": "VAULT_PATH",
-                  "value": "kubernetes"
-                },
-                {
-                  "name": "VAULT_ROLE",
-                  "value": "default"
-                },
-                {
-                  "name": "VAULT_IGNORE_MISSING_SECRETS",
-                  "value": "false"
-                },
-                {
-                  "name": "VAULT_CACERT",
-                  "value": "/vault/tls/ca.crt"
-                },
-                {
-                  "name": "DATABASE_HOST",
-                  "value": "%s-mysql.wordpress.svc" % domain_dashed
-                },
-                {
-                  "name": "DATABASE_USER",
-                  "value": "vault:secret/data/mysql/%s#user" % domain_dashed
-                },
-                {
-                  "name": "DATABASE_NAME",
-                  "value": "vault:secret/data/mysql/%s#name" % domain_dashed
-                },
-                {
-                  "name": "DATABASE_PASS",
-                  "value": "vault:secret/data/mysql/%s#pass" % domain_dashed
-                },
-                {
-                  "name": "BUCKET",
-                  "value": "hostkraken-backup"
-                },
-                {
-                  "name": "AWS_ACCESS_KEY_ID",
-                  "value": "vault:secret/data/backup-secret#access_key"
-                },
-                {
-                  "name": "AWS_SECRET_ACCESS_KEY",
-                  "value": "vault:secret/data/backup-secret#secret_key"
-                },
-                {
-                  "name": "SITE_NAME",
-                  "value": "%s" % domain
-                },
-                {
-                  "name": "RESTOREPOINT",
-                  "value": "%s" % restorepoint
-                },
-                {
-                  "name": "JOB_TO_DELETE",
-                  "value": parent["metadata"]["name"]
-                },
-                { "name": "KUBE_TOKEN",
-                  "value": "vault:secret/data/kube-token#bearer"
+                  "args": [
+                    "/bin/restore-site %s" % domain
+                  ],
+                  "env": [
+                    {
+                      "name": "DATABASE_HOST",
+                      "value": "%s-mysql.wordpress.svc" % domain_dashed
+                    },
+                    {
+                      "name": "DATABASE_USER",
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "%s-db-creds-secret" % domain_dashed,
+                              "key": "user"
+                            }
+                        }
+                    },
+                    {
+                      "name": "DATABASE_NAME",
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "%s-db-creds-secret" % domain_dashed,
+                              "key": "name"
+                            }
+                        }
+                    },
+                    {
+                      "name": "DATABASE_PASS",
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "%s-db-creds-secret" % domain_dashed,
+                              "key": "pass"
+                            }
+                        }
+                    },
+                    {
+                      "name": "BUCKET",
+                      "value": "hostkraken-backup"
+                    },
+                    {
+                      "name": "AWS_ACCESS_KEY_ID",
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "backup-secret",
+                              "key": "access_key"
+                            }
+                        }
+                    },
+                    {
+                      "name": "AWS_SECRET_ACCESS_KEY",
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "backup-secret",
+                              "key": "secret_key"
+                            }
+                        }
+                    },
+                    {
+                      "name": "SITE_NAME",
+                      "value": "%s" % domain
+                    },
+                    {
+                      "name": "RESTOREPOINT",
+                      "value": "%s" % restorepoint
+                    },
+                    {
+                      "name": "JOB_TO_DELETE",
+                      "value": parent["metadata"]["name"]
+                    },
+                    { "name": "KUBE_TOKEN",
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "default-token-cftxg",
+                              "key": "token"
+                            }
+                        }
+                    }
+                  ],
+                  "image": "registry.hostkraken.com/restoresite:latest",
+                  "imagePullPolicy": "Always",
+                  "name": "%s-restorebackup" % domain_dashed,
+                  "resources": {},
+                  "securityContext": {},
+                  "terminationMessagePath": "/dev/termination-log",
+                  "terminationMessagePolicy": "File",
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/configs",
+                      "name": "config-volume"
+                    },
+                    {
+                      "mountPath": "/content",
+                      "name": "wp-uploads-%s" % domain_dashed
+                    },
+                    {
+                      "mountPath": "/vault/",
+                      "name": "vault-env"
+                    },
+                    {
+                      "mountPath": "/vault/tls/ca.crt",
+                      "name": "vault-tls",
+                      "subPath": "ca.crt"
+                    }
+                  ]
                 }
               ],
-              "image": "registry.hostkraken.com/restoresite:latest",
-              "imagePullPolicy": "Always",
-              "name": "%s-restorebackup" % domain_dashed,
-              "resources": {},
-              "securityContext": {},
-              "terminationMessagePath": "/dev/termination-log",
-              "terminationMessagePolicy": "File",
-              "volumeMounts": [
+              "dnsPolicy": "ClusterFirst",
+              "imagePullSecrets": [
                 {
-                  "mountPath": "/configs",
+                  "name": "registry-business-business"
+                }
+              ],
+              "restartPolicy": "Never",
+              "schedulerName": "default-scheduler",
+              "securityContext": {},
+              "serviceAccount": "%s" % domain_dashed,
+              "serviceAccountName": "%s" % domain_dashed,
+              "terminationGracePeriodSeconds": 30,
+              "volumes": [
+                {
+                  "configMap": {
+                    "defaultMode": 420,
+                    "name": "%s-configmap" % domain_dashed
+                  },
                   "name": "config-volume"
                 },
                 {
-                  "mountPath": "/content",
-                  "name": "wp-uploads-%s" % domain_dashed
+                  "name": "wp-uploads-%s" % domain_dashed,
+                  "persistentVolumeClaim": {
+                    "claimName": "wp-uploads-%s" % domain_dashed
+                  }
                 },
                 {
-                  "mountPath": "/vault/",
+                  "emptyDir": {
+                    "medium": "Memory"
+                  },
                   "name": "vault-env"
                 },
                 {
-                  "mountPath": "/vault/tls/ca.crt",
                   "name": "vault-tls",
-                  "subPath": "ca.crt"
+                  "secret": {
+                    "defaultMode": 420,
+                    "secretName": "vault-tls"
+                  }
                 }
               ]
-            }
-          ],
-          "dnsPolicy": "ClusterFirst",
-          "imagePullSecrets": [
-            {
-              "name": "registry-business-business"
-            }
-          ],
-          "initContainers": [
-            {
-              "command": [
-                "sh",
-                "-c",
-                "cp /usr/local/bin/vault-env /vault/"
-              ],
-              "image": "banzaicloud/vault-env:latest",
-              "imagePullPolicy": "IfNotPresent",
-              "name": "copy-vault-env",
-              "resources": {},
-              "terminationMessagePath": "/dev/termination-log",
-              "terminationMessagePolicy": "File",
-              "volumeMounts": [
-                {
-                  "mountPath": "/vault/",
-                  "name": "vault-env"
-                }
-              ]
-            }
-          ],
-          "restartPolicy": "Never",
-          "schedulerName": "default-scheduler",
-          "securityContext": {},
-          "serviceAccount": "%s" % domain_dashed,
-          "serviceAccountName": "%s" % domain_dashed,
-          "terminationGracePeriodSeconds": 30,
-          "volumes": [
-            {
-              "configMap": {
-                "defaultMode": 420,
-                "name": "%s-configmap" % domain_dashed
-              },
-              "name": "config-volume"
-            },
-            {
-              "name": "wp-uploads-%s" % domain_dashed,
-              "persistentVolumeClaim": {
-                "claimName": "wp-uploads-%s" % domain_dashed
-              }
-            },
-            {
-              "emptyDir": {
-                "medium": "Memory"
-              },
-              "name": "vault-env"
-            },
-            {
-              "name": "vault-tls",
-              "secret": {
-                "defaultMode": 420,
-                "secretName": "vault-tls"
               }
             }
-          ]
+    }
           }
-        }
-}
-      }
-    ]
-    return {"status": desired_status, "children": desired_pods}
+        ]
+        return {"status": desired_status, "children": desired_pods}
 
-  def do_POST(self):
-    # Serve the sync() function as a JSON webhook.
-    observed = json.loads(self.rfile.read(int(self.headers.getheader("content-length"))))
-    desired = self.sync(observed["parent"], observed["children"])
-    self.send_response(200)
-    self.send_header("Content-type", "application/json")
-    self.end_headers()
-    self.wfile.write(json.dumps(desired))
+      def do_POST(self):
+        # Serve the sync() function as a JSON webhook.
+        observed = json.loads(self.rfile.read(int(self.headers.getheader("content-length"))))
+        desired = self.sync(observed["parent"], observed["children"])
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(desired))
 
-HTTPServer(("", 80), Controller).serve_forever()
+    HTTPServer(("", 80), Controller).serve_forever()
