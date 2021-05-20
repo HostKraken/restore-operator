@@ -33,44 +33,35 @@ data:
                   ],
                   "env": [
                     {
-                      "name": "VAULT_ADDR",
-                      "value": "https://vaultino.vault-infra.svc.cluster.local:8200"
-                    },
-                    {
-                      "name": "VAULT_SKIP_VERIFY",
-                      "value": "false"
-                    },
-                    {
-                      "name": "VAULT_PATH",
-                      "value": "kubernetes"
-                    },
-                    {
-                      "name": "VAULT_ROLE",
-                      "value": "default"
-                    },
-                    {
-                      "name": "VAULT_IGNORE_MISSING_SECRETS",
-                      "value": "false"
-                    },
-                    {
-                      "name": "VAULT_CACERT",
-                      "value": "/vault/tls/ca.crt"
-                    },
-                    {
                       "name": "DATABASE_HOST",
                       "value": "%s-mysql.wordpress.svc" % domain_dashed
                     },
                     {
                       "name": "DATABASE_USER",
-                      "value": "vault:secret/data/mysql/%s#user" % domain_dashed
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "%s-db-creds-secret" % domain_dashed,
+                              "key": "user"
+                            }
+                        }
                     },
                     {
                       "name": "DATABASE_NAME",
-                      "value": "vault:secret/data/mysql/%s#name" % domain_dashed
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "%s-db-creds-secret" % domain_dashed,
+                              "key": "name"
+                            }
+                        }
                     },
                     {
                       "name": "DATABASE_PASS",
-                      "value": "vault:secret/data/mysql/%s#pass" % domain_dashed
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "%s-db-creds-secret" % domain_dashed,
+                              "key": "pass"
+                            }
+                        }
                     },
                     {
                       "name": "BUCKET",
@@ -78,11 +69,21 @@ data:
                     },
                     {
                       "name": "AWS_ACCESS_KEY_ID",
-                      "value": "vault:secret/data/backup-secret#access_key"
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "backup-secret",
+                              "key": "access_key"
+                            }
+                        }
                     },
                     {
                       "name": "AWS_SECRET_ACCESS_KEY",
-                      "value": "vault:secret/data/backup-secret#secret_key"
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "backup-secret",
+                              "key": "secret_key"
+                            }
+                        }
                     },
                     {
                       "name": "SITE_NAME",
@@ -97,10 +98,15 @@ data:
                       "value": parent["metadata"]["name"]
                     },
                     { "name": "KUBE_TOKEN",
-                      "value": "vault:secret/data/kube-token#bearer"
+                      "valueFrom": {
+                          "secretKeyRef": {
+                              "name": "default-token-cftxg",
+                              "key": "token"
+                            }
+                        }
                     }
                   ],
-                  "image": "registry.digitalocean.com/business-business/restoresite:latest",
+                  "image": "registry.hostkraken.com/restoresite:latest",
                   "imagePullPolicy": "Always",
                   "name": "%s-restorebackup" % domain_dashed,
                   "resources": {},
