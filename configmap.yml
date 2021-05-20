@@ -121,15 +121,6 @@ data:
                     {
                       "mountPath": "/content",
                       "name": "wp-uploads-%s" % domain_dashed
-                    },
-                    {
-                      "mountPath": "/vault/",
-                      "name": "vault-env"
-                    },
-                    {
-                      "mountPath": "/vault/tls/ca.crt",
-                      "name": "vault-tls",
-                      "subPath": "ca.crt"
                     }
                   ]
                 }
