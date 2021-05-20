@@ -179,3 +179,5 @@ data:
 
     HTTPServer(("", 80), Controller).serve_forever()
 kind: ConfigMap
+metadata:
+  name: restore-controller
