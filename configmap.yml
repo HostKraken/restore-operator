@@ -121,6 +121,11 @@ data:
                     {
                       "mountPath": "/content",
                       "name": "wp-uploads-%s" % domain_dashed
+                    },
+                    {
+                      "mountPath": "/mnt/secrets-store",
+                      "name": "backup-secret",
+                      "readOnly": "true"
                     }
                   ]
                 }
@@ -151,6 +156,16 @@ data:
                     "claimName": "wp-uploads-%s" % domain_dashed
                   }
                 },
+                {
+                  "name": "backup-secret",
+                  "csi": {
+                      "driver": "secrets-store.csi.k8s.io",
+                      "readOnly": "true",
+                      "volumeAttributes": {
+                        "secretProviderClass": "backup-secret"
+                      }
+                   }
+                }
               ]
               }
             }
