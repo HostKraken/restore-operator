@@ -21,7 +21,8 @@ data:
             "apiVersion": "batch/v1",
             "kind": "Job",
             "metadata": {
-              "name": parent["metadata"]["name"]
+              "name": parent["metadata"]["name"],
+              "namespace": domain_dashed
             },
             "spec": {
             "template": {
@@ -34,7 +35,7 @@ data:
                   "env": [
                     {
                       "name": "DATABASE_HOST",
-                      "value": "%s-mysql.wordpress.svc" % domain_dashed
+                      "value": "%s-mysql.%s.svc" % (domain_dashed,domain_dashed)
                     },
                     {
                       "name": "DATABASE_USER",
@@ -71,7 +72,7 @@ data:
                       "name": "AWS_ACCESS_KEY_ID",
                       "valueFrom": {
                           "secretKeyRef": {
-                              "name": "backup-secret",
+                              "name": "do-backup-secret",
                               "key": "access_key"
                             }
                         }
@@ -80,7 +81,7 @@ data:
                       "name": "AWS_SECRET_ACCESS_KEY",
                       "valueFrom": {
                           "secretKeyRef": {
-                              "name": "backup-secret",
+                              "name": "do-backup-secret",
                               "key": "secret_key"
                             }
                         }
@@ -96,14 +97,6 @@ data:
                     {
                       "name": "JOB_TO_DELETE",
                       "value": parent["metadata"]["name"]
-                    },
-                    { "name": "KUBE_TOKEN",
-                      "valueFrom": {
-                          "secretKeyRef": {
-                              "name": "default-token-cftxg",
-                              "key": "token"
-                            }
-                        }
                     }
                   ],
                   "image": "registry.hostkraken.com/restoresite:latest",
@@ -123,7 +116,7 @@ data:
                       "name": "wp-uploads-%s" % domain_dashed
                     },
                     {
-                      "name": "backup-secret",
+                      "name": "do-backup-secret",
                       "mountPath": "/mnt/secrets-store",
                       "readOnly": True
                     }
@@ -157,11 +150,11 @@ data:
                   }
                 },
                 {
-                  "name": "backup-secret",
+                  "name": "do-backup-secret",
                   "csi": {
                       "driver": "secrets-store.csi.k8s.io",
                       "volumeAttributes": {
-                        "secretProviderClass": "backup-secret"
+                        "secretProviderClass": "do-backup-secret"
                       },
                       "readOnly": True
                    }

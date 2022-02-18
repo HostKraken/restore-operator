@@ -18,7 +18,8 @@
             "apiVersion": "batch/v1",
             "kind": "Job",
             "metadata": {
-              "name": parent["metadata"]["name"]
+              "name": parent["metadata"]["name"],
+              "namespace": domain_dashed 
             },
             "spec": {
             "template": {
@@ -31,7 +32,7 @@
                   "env": [
                     {
                       "name": "DATABASE_HOST",
-                      "value": "%s-mysql.wordpress.svc" % domain_dashed
+                      "value": "%s-mysql.%s.svc" % domain_dashed, domain_dashed
                     },
                     {
                       "name": "DATABASE_USER",
@@ -68,7 +69,7 @@
                       "name": "AWS_ACCESS_KEY_ID",
                       "valueFrom": {
                           "secretKeyRef": {
-                              "name": "backup-secret",
+                              "name": "do-backup-secret",
                               "key": "access_key"
                             }
                         }
@@ -77,7 +78,7 @@
                       "name": "AWS_SECRET_ACCESS_KEY",
                       "valueFrom": {
                           "secretKeyRef": {
-                              "name": "backup-secret",
+                              "name": "do-backup-secret",
                               "key": "secret_key"
                             }
                         }
@@ -93,14 +94,6 @@
                     {
                       "name": "JOB_TO_DELETE",
                       "value": parent["metadata"]["name"]
-                    },
-                    { "name": "KUBE_TOKEN",
-                      "valueFrom": {
-                          "secretKeyRef": {
-                              "name": "default-token-cftxg",
-                              "key": "token"
-                            }
-                        }
                     }
                   ],
                   "image": "registry.hostkraken.com/restoresite:latest",
@@ -140,8 +133,8 @@
               "restartPolicy": "Never",
               "schedulerName": "default-scheduler",
               "securityContext": {},
-              "serviceAccount": "%s" % domain_dashed,
-              "serviceAccountName": "%s" % domain_dashed,
+              "serviceAccount": "default",
+              "serviceAccountName": "default",
               "terminationGracePeriodSeconds": 30,
               "volumes": [
                 {
